@@ -1,0 +1,13 @@
+{
+    "wordlists":[
+        "/dico/fr-top20000",
+        "/dico/fr-top1000000"
+    ],
+    "rules":[
+        "/dico/rules/OneRuleToRuleThemAll.rule.log",
+        "/dico/rules/rules.smart.log"
+    ],
+    "brute_force":[
+        "7"
+    ]
+}
