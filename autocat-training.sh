@@ -31,10 +31,11 @@ fi
 if [ -z "$output_files_path" ]; then
   echo $output_files_path
   echo 'default location for the output files in ./result' >&2
-  if [ ! -d "./result" ]; then
-    mkdir result
-  fi
   output_files_path="result"
+fi
+
+if [ ! -d "$output_files_path" ]; then
+    mkdir $output_files_path
 fi
 
 rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
