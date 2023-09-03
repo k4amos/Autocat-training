@@ -43,7 +43,11 @@ brute_force=$(jq -r '.brute_force[]' "$config_file")
 for wordlist in $wordlists; do
   for rule in $rules; do
     echo "Élément : $wordlist $rule"
-    timeout --foreground 3600 hashcat -m $hashes_type $hashes_location $wordlist -r $rule --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/$wordlist $rule"
+    name_wordlist = $(echo "$wordlist" | rev | cut -d'/' -f1 | rev)
+    name_rule = $(echo "$rule" | rev | cut -d'/' -f1 | rev)
+    echo $name_wordlist
+    echo $name_rule
+    timeout --foreground 3600 hashcat -m $hashes_type $hashes_location $wordlist -r $rule --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/$name_wordlist $name_rule"
     rm ~/.local/share/hashcat/hashcat.potfile
   done
 done
