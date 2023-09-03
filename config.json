@@ -4,8 +4,8 @@
         "/dico/fr-top1000000"
     ],
     "rules":[
-        "/dico/rules/OneRuleToRuleThemAll.rule.log",
-        "/dico/rules/rules.smart.log"
+        "/dico/rules/OneRuleToRuleThemAll.rule",
+        "/dico/rules/rules.smart"
     ],
     "brute_force":[
         "7"
