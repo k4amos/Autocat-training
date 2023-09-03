@@ -3,7 +3,7 @@
         "/dico/fr-top20000"
     ],
     "rules":[
-        "/dico/rules/rules.smart"
+        "/dico/rules/rules.small"
     ],
     "brute_force":[
         7

@@ -29,7 +29,8 @@ if [ -z "$hashes_type" ] || [ -z "$hashes_location" ]; then
 fi
 
 if [ -z "$output_files_path" ]; then
-  output_files_path="."
+  echo 'default location for the output files in ./output'
+  output_files_path="output"
 fi
 
 rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
