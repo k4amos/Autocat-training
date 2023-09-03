@@ -6,6 +6,7 @@
         "/dico/rules/rules.small"
     ],
     "brute_force":[
+        6,
         7
     ]
 }
