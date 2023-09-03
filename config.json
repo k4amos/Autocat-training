@@ -1,10 +1,8 @@
 {
     "wordlists":[
-        "/dico/fr-top20000",
-        "/dico/fr-top1000000"
+        "/dico/fr-top20000"
     ],
     "rules":[
-        "/dico/rules/OneRuleToRuleThemAll.rule",
         "/dico/rules/rules.smart"
     ],
     "brute_force":[
