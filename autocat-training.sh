@@ -55,7 +55,7 @@ done
 
 for nb_digit in $brute_force; do
   echo "nb_digit : $nb_digit"
-  mask="${mask_total:0:($nb_digits)*2}"
+  mask="${mask_total:0:($nb_digit)*2}"
   timeout --foreground 3600 hashcat -a 3 -1 ?l?d?u -2 ?l?d -3 $mask 3_default_mask_hashcat.hcchr -m $hashes_type $hashes_location --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/$nb_digit"
   rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
 done
