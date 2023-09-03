@@ -10,7 +10,7 @@ usage() {
   printf "Usage: ./autocat-training.sh -m <hashes_type> -l <hashes_location> [-o <output_files_path>] [-h]"
 }
 
-while getopts 'h:m:l:o' opt; do
+while getopts 'h:m:l:o:' opt; do
   case "${opt}" in
     m) hashes_type=${OPTARG} ;;
     l) hashes_location=${OPTARG} ;;
@@ -29,7 +29,8 @@ if [ -z "$hashes_type" ] || [ -z "$hashes_location" ]; then
 fi
 
 if [ -z "$output_files_path" ]; then
-  echo 'default location for the output files in ./output'
+  echo $output_files_path
+  echo 'default location for the output files in ./output' >&2
   output_files_path="output"
 fi
 
