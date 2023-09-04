@@ -40,6 +40,10 @@ if [ ! -d "$output_files_path" ]; then
     mkdir $output_files_path
 fi
 
+if [ ! -d "$output_files_path/hashcat_result" ]; then
+  mkdir "$output_files_path/hashcat_result"
+fi
+
 rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
 
 # Utilisation de jq pour extraire les valeurs des tableaux
@@ -54,7 +58,7 @@ for wordlist in $wordlists; do
     name_wordlist=$(echo "$wordlist" | rev | cut -d'/' -f1 | rev)
     name_rule=$(echo "$rule" | rev | cut -d'/' -f1 | rev)
     echo "$output_files_path/$name_wordlist $name_rule"
-    timeout --foreground 3600 hashcat -m $hashes_type $hashes_location $wordlist -r $rule --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/$name_wordlist $name_rule"
+    timeout --foreground 3600 hashcat -m $hashes_type $hashes_location $wordlist -r $rule --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/hashcat_result/$name_wordlist $name_rule"
     rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
   done
 done
@@ -64,8 +68,9 @@ for nb_digit in $brute_force; do
   echo "nb_digit : $nb_digit"
   mask="${mask_total:0:($nb_digit)*2}"
   echo "$output_files_path/$name_wordlist $name_rule"
-  timeout --foreground 3600 hashcat $hashes_location -a 3 -1 ?l?d?u -2 ?l?d -3 3_default_mask_hashcat.hcchr $mask -m $hashes_type --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/$nb_digit"
+  timeout --foreground 3600 hashcat $hashes_location -a 3 -1 ?l?d?u -2 ?l?d -3 3_default_mask_hashcat.hcchr $mask -m $hashes_type --status --status-timer 1 --machine-readable -O -w 3| tee "$output_files_path/hashcat_result/$nb_digit"
   rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
 done
+
 
 python3 optimisation_locale.py $output_files_path

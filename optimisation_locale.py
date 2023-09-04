@@ -7,14 +7,14 @@ list_time_y = []
 
 output_files_path = sys.argv[1]
 
-list_file = os.listdir(output_files_path)
+list_file = os.listdir(f"{output_files_path}/hashcat_result/")
 
 limite_seconde = 3600
 
 limite_seconde_algo = 3600
 
 def create_set(filename, nombre_seconde_limite):
-    with open(f"{output_files_path}/{filename}", "r") as f:
+    with open(f"{output_files_path}/hashcat_result/{filename}", "r") as f:
             all_lines = f.readlines()
 
     list_mdp = []
@@ -50,8 +50,10 @@ def get_best_element(sous_ensemble_objets, total_mdp):
     for name in [*sous_ensemble_objets]:
         vitesse_sous_ensemble_objets.append(len(sous_ensemble_objets[name]["ensemble"])/sous_ensemble_objets[name]["poids"])
 
-    vitesse_sous_ensemble_objets_trie, sous_ensemble_objets_trie,  = zip(*sorted(zip(vitesse_sous_ensemble_objets, [*sous_ensemble_objets]), reverse=True))
-
+    if [*sous_ensemble_objets]!= []:
+        vitesse_sous_ensemble_objets_trie, sous_ensemble_objets_trie,  = zip(*sorted(zip(vitesse_sous_ensemble_objets, [*sous_ensemble_objets]), reverse=True))
+    else:
+        return None
     return sous_ensemble_objets_trie[0]
 
 
@@ -72,7 +74,7 @@ def solver_local_optimisation(sous_ensemble_objets):
         print("meilleur element", meilleur_element)
 
 
-        if len(total_mdp | sous_ensemble_objets[meilleur_element]["ensemble"]) == len(total_mdp):
+        if meilleur_element == None or len(total_mdp | sous_ensemble_objets[meilleur_element]["ensemble"]) == len(total_mdp):
             break
 
         liste_ordre.append(meilleur_element)
@@ -83,6 +85,8 @@ def solver_local_optimisation(sous_ensemble_objets):
             mode='markers+lines',
             name=meilleur_element)
         )
+
+        fig.update_layout(showlegend=True)
 
         total_mdp = total_mdp | sous_ensemble_objets[meilleur_element]["ensemble"]
 
@@ -105,7 +109,7 @@ def solver_local_optimisation(sous_ensemble_objets):
 
     fig.show()
 
-    fig.write_image("screenshot.png")
+    fig.write_image(f"{output_files_path}/result.png")
 
     return liste_ordre
 
@@ -114,4 +118,6 @@ liste_ordre = solver_local_optimisation(ensemble_objets)
 
 print(liste_ordre)
 
-
+with open(f"{output_files_path}/cracking_sequence.txt", "w") as f:
+    for k in liste_ordre:
+        f.write(k+"\n")
