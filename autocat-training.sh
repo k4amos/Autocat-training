@@ -29,7 +29,6 @@ if [ -z "$hashes_type" ] || [ -z "$hashes_location" ]; then
 fi
 
 if [ -z "$output_files_path" ]; then
-  echo $output_files_path
   echo 'Default location for the output files in ./result' >&2
   output_files_path="result"
 fi
@@ -50,7 +49,6 @@ rm ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
 wordlists=$(jq -r '.wordlists[]' "$config_file")
 rules=$(jq -r '.rules[]' "$config_file")
 brute_force=$(jq -r '.brute_force[]' "$config_file")
-
 
 for wordlist in $wordlists; do
   for rule in $rules; do
