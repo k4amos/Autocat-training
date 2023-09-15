@@ -9,11 +9,9 @@ output_files_path = sys.argv[1]
 
 list_file = os.listdir(f"{output_files_path}/hashcat_result/")
 
-limite_seconde = 3600
+limite_seconde_algo = 3600*3
 
-limite_seconde_algo = 3600
-
-def create_set(filename, nombre_seconde_limite):
+def create_set(filename):
     with open(f"{output_files_path}/hashcat_result/{filename}", "r") as f:
             all_lines = f.readlines()
 
@@ -24,15 +22,13 @@ def create_set(filename, nombre_seconde_limite):
            list_mdp.append(all_lines[k].split(":")[1])
         if "STATUS" in all_lines[k]:
             compteur_seconde +=1
-        if compteur_seconde > nombre_seconde_limite:
-            return list_mdp, compteur_seconde
     return list_mdp, compteur_seconde
 
 
 ensemble_objets = {}
 for filename in list_file:
     try:
-        list_mdp, compteur_seconde = create_set(filename, limite_seconde)
+        list_mdp, compteur_seconde = create_set(filename)
         if len(set(list_mdp)) != 0:
 
             if " " not in filename:
