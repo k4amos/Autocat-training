@@ -128,13 +128,13 @@ def update_remaining_attacks(attacks: Dict[str, Dict], recovered_passwords: Set[
     return attacks
 
 
-def optimize_cracking_sequence(attacks: Dict[str, Dict], time_limit: int = 36000) -> List[str]:
+def optimize_cracking_sequence(attacks: Dict[str, Dict], time_limit: int = 3600*24*10) -> List[str]:
     """
     Find sequence of attacks within time limit using greedy optimization.
 
     Args:
         attacks: Dictionary of available attacks
-        time_limit: Maximum time budget in seconds (default: 10 hours)
+        time_limit: Maximum time budget in seconds (default: 10 days)
 
     Returns:
         Ordered list of attack names representing sequence

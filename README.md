@@ -1,222 +1,119 @@
-# Autocat Training
+# Autocat-training
 
-<p align="center">
+<div align="center">
     <img src="img/logo.png" style="height:350px">
-</p>
+</div>
 
 ## Overview
 
-Autocat-training aims to solve the **knapsack problem** using a **greedy algorithm** to determine the most optimal password cracking sequence for cracking a given input list of hashes.
+Autocat-training aims to solve the **knapsack problem** using a **greedy algorithm** to determine the **most optimal password cracking sequence** for cracking a given input list of hashes and a list of cracking methods (wordlists, rules, brute-force) that you can specify in the `config.json` file.
 
-This can enable benchmarking with a large number of hashes from diverse sources to determine a generic cracking sequence that effectively cracks hashes from a specific language or geographic region.
-
-⚠️ **The README is currently under construction.**
-
-```
+> [!NOTE]
+> This can enable benchmarking with a large number of hashes from diverse sources to determine a generic cracking sequence that effectively cracks hashes from a specific language or geographic region.
 
 ## Usage
 
-### Basic Command
+First, you must specify in the `config.json` file the paths to the wordlists, rules, and the number of characters you want to use for brute force. All wordlists will be cracked using all rules with hashcat.
 
 ```bash
-./autocat-training.sh -m <hash_type> -l <hash_file> [-o <output_dir>]
+./autocat-training.sh -m <hash_type> -p <hash_file> [-t <timeout>] [-o <output_dir>]
 ```
 
-### Parameters
+Autocat-training performs all cracking methods specified in the configuration file (brute force, and all wordlists with all rules), and saves Hashcat logs to the specified `output_dir` file.
 
-- `-m <hash_type>`: Hashcat hash type number (required)
-  - Example: `0` for MD5, `1000` for NTLM, `1800` for SHA-512 Unix
-- `-l <hash_file>`: Path to file containing hashes to crack (required)
-- `-o <output_dir>`: Output directory for results (optional, default: `./results`)
-- `-h`: Display help message
+A **greedy optimization** algorithm is then launched to determine the best cracking sequence suited to the list of hashes `hash_file` specified as input.
 
-### Examples
+<div align="center">
+    <img src="img/output_autocat-training.png" style="height:350px">
+</div>
 
-```bash
-# Crack NTLM hashes
-./autocat-training.sh -m 1000 -l ntlm_hashes.txt
+## Theory
 
-# Crack MD5 hashes with custom output directory
-./autocat-training.sh -m 0 -l md5_hashes.txt -o my_audit_results
+The goal is to obtain the best password cracking sequence tailored to a defined list of hashes.
 
-# Display help
-./autocat-training.sh -h
-```
+### Some definitions
 
-## Configuration
+- **Cracking method**: technique used to try to recover a plaintext password from a hash according to a defined strategy, for example:
+    - RockYou (wordlist) + best64 (rules)
+    - 8-character brute-force
 
-The tool uses a `config.json` file to define attack strategies. The configuration includes:
+- **Cracking sequence**: the set of cracking methods used during a cracking session.
 
-### Wordlists
+- **Cracking curve**: curve of the number (or percentage) of hash entries recovered in plaintext as a function of time. It is a monotonically increasing curve.
+> [!NOTE]
+> It is also possible to define this curve with the number of combinations tested on the x-axis, which makes the curve independent of the hardware used and the hash type. The number of combinations is proportional to the cracking time (with exceptions: brute-force can be faster than dictionary-based cracking).
 
-Array of wordlist file paths to use for dictionary attacks:
+<div align="center">
+    <img src="img/cracking_sequence.png" style="height:300px">
+</div>
 
-```json
-"wordlists": [
-    "/usr/share/wordlists/autocat/wordlists/default_password",
-    "/usr/share/wordlists/autocat/wordlists/keyboard_walk_us",
-    ...
-]
-```
+<div align="center">Cracking curve of a cracking sequence composed of 3 cracking methods of the wordlist + rules type plotted using the tool [cracking_curve](https://github.com/k4amos/cracking_curve)</div>
 
-### Rules
+### Understanding the problem
 
-Array of rule files for password mutations:
+Randomly selecting wordlists from the internet and using them as a cracking method is inefficient, because these wordlists may include redundant or inappropiate entries.
 
-```json
-"rules": [
-    "/usr/share/wordlists/autocat/rules/best64.rule",
-    "/usr/share/wordlists/autocat/rules/dive.rule",
-    ...
-]
-```
+Furthermore, due to the rules applied, two different wordlists may crack the same passwords. Simply removing common passwords from the wordlists is not enough to ensure that each cracking method cracks different passwords.
 
-### Brute Force
+<div align="center">
+    <img src="img/inclusion_2.png" style="height:300px">
+</div>
 
-Array of character lengths for brute force attacks:
+<div align="center">Wordlist 1 and Wordlist 2 are strictly different, but due to the rule applied to Wordlist 1, they can crack the same password.</div>
 
-```json
-"brute_force": [4, 5, 6, 7, 8, 9, 10]
-```
+The rules can introduce overlaps between different wordlists, so it is better to reason in terms of {wordlist + rule} pairs rather than wordlists alone. To avoid these inclusion issues, it could also be relevant to use thematic wordlists such as those by [clem9669](https://github.com/clem9669/wordlists), but how should we order and select them?
 
-## How It Works
+### The knapsack problem and the greedy algorithm to solve it
 
-### 1. Attack Execution Phase
+Each cracking method has a cost, which is its cracking time, and a value, which is the percentage (or number) of cracked hashes. We are in the same situation as with the [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem) 🎒
 
-The tool systematically executes:
-- **Wordlist + Rule Combinations**: Each wordlist is combined with each rule file
-- **Brute Force Attacks**: Incremental mask attacks for specified character lengths
+<div align="center">
+    <img src="img/approach.png" style="height:400px">
+</div>
 
-Each attack runs with:
-- 1-hour timeout (configurable)
-- Machine-readable output for parsing
-- Status updates every second
-- Optimized performance settings (-O -w 3)
+For a fixed list of hashes:
+- **Weight** ↔️ Cracking time of the selected cracking method ≈ Number of hashes tested.
+-  **Value** ↔️ % of the password list recovered in plaintext by the cracking method.
 
-### 2. Optimization Phase
+**Particularities compared to the knapsack problem:**
+-  The weight of the methods (or, correspondingly, the knapsack size) depends on the hash type, the hardware, etc.
+-  There are inclusion issues.
+-  We want to crack passwords as quickly as possible, whereas the knapsack problem does not deal with priorities.
 
-After collecting results, the optimization algorithm:
+This last condition means that we aim to obtain a cracking curve in the form of a **decreasing exponential**.
 
-1. **Parses Results**: Extracts recovered passwords and execution time from each attack
-2. **Calculates Efficiency**: Computes passwords/second recovery rate for each attack
-3. **Greedy Selection**: Iteratively selects the most efficient remaining attack
-4. **Generates Sequence**: Produces an ordered list of attacks optimized for time efficiency
-5. **Creates Visualization**: Plots cumulative password recovery over time
+<div align="center">
+    <img src="img/desired_cracking_curve.png" style="height:300px">
+</div>
 
-### 3. Output Files
+We want to choose the wordlists that maximize the value-to-cost ratio at each step (and while taking into account the inclusion problem). The best solution to solve this knapsack problem applied to password cracking appears to be a **greedy algorithm**.
 
-The tool generates several output files in the specified directory:
+> [!WARNING]
+> A greedy algorithm follows the principle of making, step by step, **a locally optimal choice**. ⚠️ It does not always guarantee the optimal solution for all problems — it's a heuristic approach
 
-```
-results/
-├── hashcat_result/          # Raw hashcat output for each attack
-│   ├── wordlist1_rule1      # Individual attack results
-│   ├── wordlist2_rule1
-│   └── bruteforce_6chars
-├── cracking_sequence.txt  # Recommended attack order
-└── optimization_results.png       # Visualization of recovery rates
-```
+### Autocat-training
 
-## Mask Configuration
+Autocat-training aims to solve this knapsack problem and output an optimal heuristic cracking sequence. All wordlists provided as inputs will be run with all rules; then cracking sequences using the brute-force will also be executed (using Hashcat's default mask). The hashcat potfile is deleted after each cracking method.
 
-The tool includes a custom character set file (`3_default_mask_hashcat.hcchr`) that defines:
-- Lowercase letters (a-z)
-- Numbers (0-9)
-- Special characters (*!$@_)
+<div align="center">
+    <img src="img/autocat_training.png" style="height:400px">
+</div>
 
-This is used for brute force attacks with the mask pattern: `?1?2?2?2?2?2?2?3?3?3?3?d?d?d?d`
+<div align="center">General principle of Autocat‑training</div>
 
-## Security Considerations
+The Python file `greedy_optimization.py` contains the greedy algorithm used, whose principle is detailed below:
 
-⚠️ **Important**: This tool is designed for legitimate security testing only.
+<div align="center">
+    <img src="img/greedy_algorithm.png" style="height:800px">
+</div>
 
-- Only use on systems you own or have explicit permission to test
-- Store hash files securely and delete after testing
-- Be aware of legal implications in your jurisdiction
-- Consider computational resources and electricity costs
-- Implement proper access controls on result files
+## Other Tools
 
-## Performance Tips
+- [Autocat](https://github.com/k4amos/Autocat) : This tool makes it easy to run a cracking sequence with Hashcat without launching each method 'by hand'. Moreover, at the end of each method, the new passwords recovered in plaintext in the potfile are used as a wordlist together with a rule, which significantly improves cracking performance. This tool is pre-configured to crack French passwords: a large benchmark was run with Autocat‑training with a significant number of French hashes from various sources, which were cracked using a GPU. The sequence obtained is Autocat's default, but it is possible to define a custom sequence for other languages.
+- [cracking_curve](https://github.com/k4amos/cracking_curve) : This tool makes it easy to display the cracking curve obtained with Hashcat/Autocat.
 
-1. **Optimize Wordlists**: Start with targeted wordlists relevant to your context
-2. **Rule Selection**: Use proven rule sets like OneRuleToRuleThemAll
-3. **Hardware Acceleration**: Ensure GPU drivers are properly configured
-4. **Time Limits**: Adjust timeout based on your testing window
-5. **Incremental Testing**: Start with shorter brute force lengths
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"hashcat: command not found"**
-   - Ensure hashcat is installed and in PATH
-
-2. **"jq: command not found"**
-   - Install jq package for JSON processing
-
-3. **Python module errors**
-   - Install required packages: `pip install plotly kaleido`
-
-4. **Permission denied**
-   - Make script executable: `chmod +x autocat-training.sh`
-
-5. **No results generated**
-   - Check hash format matches specified type
-   - Verify wordlists and rules exist at specified paths
-
-## Advanced Usage
-
-### Custom Attack Strategies
-
-Modify `config.json` to customize attack strategies:
-
-```json
-{
-    "wordlists": ["custom_wordlist.txt"],
-    "rules": ["custom_rules.rule"],
-    "brute_force": [4, 5, 6]
-}
-```
-
-### Integration with Other Tools
-
-Results can be integrated with:
-- Security reporting tools
-- Password policy analyzers
-- Compliance verification systems
-
-## Project Structure
-
-```
-autocat-training/
-├── autocat-training.sh           # Main execution script
-├── attack_sequence_optimizer.py         # Optimization algorithm
-├── config.json                   # Attack configuration
-├── 3_default_mask_hashcat.hcchr # Character set for brute force
-├── LICENSE                       # License information
-├── README.md                     # This file
-└── img/
-    └── logo.png                  # Project logo
-```
-
-## License
-
-This project is licensed under the terms specified in the LICENSE file.
-
-## Contributing
-
-Contributions are welcome! Please ensure:
-- Code follows existing style conventions
-- Documentation is updated for new features
-- Security best practices are maintained
 
 ## Disclaimer
 
-This tool is provided for educational and authorized security testing purposes only. Users are responsible for complying with all applicable laws and regulations. The authors assume no liability for misuse or damage caused by this tool.
-
-## Acknowledgments
-
-- [Autocat](https://github.com/k4amos/Autocat) - The parent project this tool supports
-- Hashcat team for the powerful password recovery engine
-- Security research community for rule sets and wordlists
-- Open source contributors
+> [!CAUTION]
+> This tool is provided for educational and authorized security testing purposes only. Users are responsible for complying with all applicable laws and regulations. The authors assume no liability for misuse or damage caused by this tool.

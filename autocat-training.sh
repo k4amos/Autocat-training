@@ -8,32 +8,35 @@
 CONFIG_FILE="config.json"
 DEFAULT_MASK="?1?2?2?2?2?2?2?3?3?3?3?d?d?d?d"
 DEFAULT_OUTPUT_DIR="results"
-TIMEOUT_SECONDS=3600  # 1 hour per attack
+DEFAULT_TIMEOUT_SECONDS=3600  # 1 hour per cracking method by default
 
 # Display usage information
 usage() {
     cat << EOF
-Usage: $0 -m <hash_type> -l <hash_file> [-o <output_dir>] [-h]
+Usage: $0 -m <hash_type> -l <hash_file> [-o <output_dir>] [-t <timeout>] [-h]
+
+ℹ️ You must specify in config.json the wordlists, the rules, and the amount of brute force you want to use and their paths.
 
 Options:
     -m <hash_type>    Hashcat hash type (e.g., 0 for MD5, 1000 for NTLM)
-    -l <hash_file>    Path to file containing hashes to crack
+    -p <hash_file>    Path to file containing hashes to crack
     -o <output_dir>   Output directory for results (default: ./results)
+    -t <timeout>      Maximum cracking time (in seconds) for Hashcat per cracking method (default: 1h)
     -h                Display this help message
 
 Examples:
-    $0 -m 1000 -l hashes.txt
-    $0 -m 0 -l md5_hashes.txt -o my_results
+    $0 -m 1000 -p hashes.txt
 
 EOF
 }
 
 # Parse command line arguments
-while getopts 'h:m:l:o:' opt; do
+while getopts 'h:m:p:o:t:' opt; do
     case "${opt}" in
         m) HASH_TYPE="${OPTARG}" ;;
-        l) HASH_FILE="${OPTARG}" ;;
+        p) HASH_FILE="${OPTARG}" ;;
         o) OUTPUT_DIR="${OPTARG}" ;;
+		t) TIMEOUT_SECONDS="${OPTARG}" ;;
         h) usage; exit 0 ;;
         *) usage; exit 1 ;;
     esac
@@ -62,13 +65,30 @@ fi
 OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 OUTPUT_DIR="${OUTPUT_DIR%/}"  # Remove trailing slash if present
 
+# Set Timeout duration
+TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-$DEFAULT_TIMEOUT_SECONDS}"
+
 # Create output directories
-echo "Creating output directories..." # TODO : ask if you want to delete it it is already present
+echo "Creating output directories..."
 mkdir -p "$OUTPUT_DIR"
 
-# Clear hashcat potfile to ensure clean results
-echo "Clearing hashcat potfile..."
-rm -f ~/.local/share/hashcat/hashcat.potfile 2>/dev/null
+# Check if the directory is empty
+if [ -z "$(ls -A "$OUTPUT_DIR")" ]; then
+    echo "✅ The directory '$OUTPUT_DIR' is empty, continuing..."
+else
+    echo "⚠️  The directory '$OUTPUT_DIR' is not empty."
+    read -p "Do you want to clear it? (y/N) " answer
+    case "$answer" in
+        [yY]|[yY][eE][sS])
+            echo "Deleting contents of '$OUTPUT_DIR'..."
+            rm -rf "$OUTPUT_DIR"/* "$OUTPUT_DIR"/.[!.]* "$OUTPUT_DIR"/..?* 2>/dev/null
+            echo "✅ Directory cleared."
+            ;;
+        *)
+            echo "❌ The directory was not cleared, continuing..."
+            ;;
+    esac
+fi
 
 # Extract configuration using jq
 if ! command -v jq &> /dev/null; then
@@ -82,6 +102,11 @@ readonly RULES=$(jq -r '.rules[]' "$CONFIG_FILE")
 readonly BRUTE_FORCE_LENGTHS=$(jq -r '.brute_force[]' "$CONFIG_FILE")
 
 readonly HASHCAT_POTFILE_PATH=$(jq -r '.hashcat_potfile' "$CONFIG_FILE" | envsubst)
+
+# Clear hashcat potfile to ensure clean results
+echo "Clearing hashcat potfile..."
+rm -f $HASHCAT_POTFILE_PATH 2>/dev/null
+
 
 if [ -z "$WORDLISTS" ] && [ -z "$BRUTE_FORCE_LENGTHS" ]; then
     echo "Error: No wordlists or brute force configurations found in $CONFIG_FILE" >&2
@@ -108,7 +133,7 @@ run_hashcat_attack() {
     fi
 
     # Clear potfile for next attack
-    rm -f ~/.local/share/hashcat/hashcat.potfile 2>/dev/null # TODO replace by config.json variable
+    rm -f $HASHCAT_POTFILE_PATH
 
     return 0
 }
