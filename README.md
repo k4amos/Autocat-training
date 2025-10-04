@@ -24,7 +24,7 @@ Autocat-training performs all cracking methods specified in the configuration fi
 A **greedy optimization** algorithm is then launched to determine the best cracking sequence suited to the list of hashes `hash_file` specified as input.
 
 <div align="center">
-    <img src="img/output_autocat-training.png" style="height:350px">
+    <img src="img/output_autocat-training.png">
 </div>
 
 ## Theory
@@ -44,10 +44,10 @@ The goal is to obtain the best password cracking sequence tailored to a defined 
 > It is also possible to define this curve with the number of combinations tested on the x-axis, which makes the curve independent of the hardware used and the hash type. The number of combinations is proportional to the cracking time (with exceptions: brute-force can be faster than dictionary-based cracking).
 
 <div align="center">
-    <img src="img/cracking_sequence.png" style="height:300px">
+    <img src="img/cracking_sequence.png">
 </div>
 
-<div align="center">Cracking curve of a cracking sequence composed of 3 cracking methods of the wordlist + rules type plotted using the tool [cracking_curve](https://github.com/k4amos/cracking_curve)</div>
+<div align="center">Cracking curve of a cracking sequence composed of 3 cracking methods of the 'wordlist + rules' type </div>
 
 ### Understanding the problem
 
@@ -56,7 +56,7 @@ Randomly selecting wordlists from the internet and using them as a cracking meth
 Furthermore, due to the rules applied, two different wordlists may crack the same passwords. Simply removing common passwords from the wordlists is not enough to ensure that each cracking method cracks different passwords.
 
 <div align="center">
-    <img src="img/inclusion_2.png" style="height:300px">
+    <img src="img/inclusion_2.png">
 </div>
 
 <div align="center">Wordlist 1 and Wordlist 2 are strictly different, but due to the rule applied to Wordlist 1, they can crack the same password.</div>
@@ -68,7 +68,7 @@ The rules can introduce overlaps between different wordlists, so it is better to
 Each cracking method has a cost, which is its cracking time, and a value, which is the percentage (or number) of cracked hashes. We are in the same situation as with the [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem) 🎒
 
 <div align="center">
-    <img src="img/approach.png" style="height:400px">
+    <img src="img/approach.png">
 </div>
 
 For a fixed list of hashes:
@@ -83,7 +83,7 @@ For a fixed list of hashes:
 This last condition means that we aim to obtain a cracking curve in the form of a **decreasing exponential**.
 
 <div align="center">
-    <img src="img/desired_cracking_curve.png" style="height:300px">
+    <img src="img/desired_cracking_curve.png">
 </div>
 
 We want to choose the wordlists that maximize the value-to-cost ratio at each step (and while taking into account the inclusion problem). The best solution to solve this knapsack problem applied to password cracking appears to be a **greedy algorithm**.
