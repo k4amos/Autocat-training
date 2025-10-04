@@ -96,7 +96,7 @@ We want to choose the wordlists that maximize the value-to-cost ratio at each st
 Autocat-training aims to solve this knapsack problem and output an optimal heuristic cracking sequence. All wordlists provided as inputs will be run with all rules; then cracking sequences using the brute-force will also be executed (using Hashcat's default mask). The hashcat potfile is deleted after each cracking method.
 
 <div align="center">
-    <img src="img/autocat_training.png" style="height:400px">
+    <img src="img/autocat_training.png">
 </div>
 
 <div align="center">General principle of Autocat‑training</div>
@@ -104,7 +104,7 @@ Autocat-training aims to solve this knapsack problem and output an optimal heuri
 The Python file `greedy_optimization.py` contains the greedy algorithm used, whose principle is detailed below:
 
 <div align="center">
-    <img src="img/greedy_algorithm.png" style="height:800px">
+    <img src="img/greedy_algorithm.png">
 </div>
 
 ## Other Tools
