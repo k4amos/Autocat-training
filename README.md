@@ -114,6 +114,9 @@ The Python file `greedy_optimization.py` contains the greedy algorithm used, who
 - [Autocat](https://github.com/k4amos/Autocat) : This tool makes it easy to run a cracking sequence with Hashcat without launching each method 'by hand'. Moreover, at the end of each method, the new passwords recovered in plaintext in the potfile are used as a wordlist together with a rule, which significantly improves cracking performance. This tool is pre-configured to crack French passwords: a large benchmark was run with Autocat‑training with a significant number of French hashes from various sources, which were cracked using a GPU. The sequence obtained is Autocat's default, but it is possible to define a custom sequence for other languages.
 - [cracking_curve](https://github.com/k4amos/cracking_curve) : This tool makes it easy to display the cracking curve obtained with Hashcat/Autocat.
 
+<div align="center">
+    <img src="img/summary.png">
+</div>
 
 ## Disclaimer
 
