@@ -62,7 +62,7 @@ Furthermore, due to the rules applied, two different wordlists may crack the sam
 <div align="center">Wordlist 1 and Wordlist 2 are strictly different, but due to the rule applied to Wordlist 1, they can crack the same password.</div>
 <br>
 
-The rules can introduce overlaps between different wordlists, so it is better to reason in terms of {wordlist + rule} pairs rather than wordlists alone. To avoid these inclusion issues, it could also be relevant to use thematic wordlists such as those by [clem9669](https://github.com/clem9669/wordlists), but how should we order and select them?
+The rules can introduce overlaps between different wordlists, so it is better to reason in terms of {wordlist + rule} pairs rather than wordlists alone. To avoid these inclusion issues, it could also be relevant to use thematic wordlists such as those by [clem9669](https://github.com/clem9669/wordlists).
 
 ### The knapsack problem and the greedy algorithm to solve it
 
